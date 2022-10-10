@@ -18,22 +18,12 @@ Options:
 
 When executed it yields statistics about the tests it ran as well as source code location
 of where verifications failed or tests were skipped:
-```
-FAIL[not_reached] VERIFY_NOT_REACHED (main.c:4)
-SKIP[skipped](main.c:6)
-FAIL[failed]: VERIFY 1 == 2 (main.c:8)
-SUCCESS[success](main.c:10)
-BENCHMARK[string_search]: took 69 ms (main.c:12)
-Result: 1 Success, 2 Failed, 1 Skipped
-```
+
+![Running all tests](img/unit_test_run.svg?raw=true "Running all tests")
 
 It also provides the option to run a list of tests:
-```bash
-./unit_test not_reached failed
-FAIL[not_reached] VERIFY_NOT_REACHED (main.c:3)
-FAIL[failed]: VERIFY 1 == 2 (main.c:8)
-Result: 0 Success, 1 Failed, 0 Skipped
-```
+
+![Running selected tests](img/run_select_tests.svg?raw=true "Running selected tests")
 
 You can turn of VT100 color escape codes by adding `#define CLONK_NO_COLOR`.
 Additionally you may set the amount of cycles done for benchmarks with overriding `CLONK_BENCHMARK_CYCLES`. 
