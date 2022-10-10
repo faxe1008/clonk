@@ -52,9 +52,19 @@ int main(int argc, char** argv)
 }
 ```
 
+Usage:
+```bash
+Usage: ./unit_test [-tblh] [TEST_NAME]...
+clonk based test/benchmark executable.
+Options:
+  -b    Run benchmarks
+  -t    Run tests
+  -l    List available tests
+  -h    Show this help message
+```
+
 When executed it yields statistics about the tests it ran as well as source code location
 of where verifications failed or tests were skipped:
-
 ```
 FAIL[not_reached] VERIFY_NOT_REACHED (main.c:4)
 SKIP[skipped](main.c:6)
@@ -64,10 +74,11 @@ BENCHMARK[string_search]: took 69 ms (main.c:12)
 Result: 1 Success, 2 Failed, 1 Skipped
 ```
 
-It also provides the option to run a single test:
+It also provides the option to run a list of tests:
 ```bash
-./unit_test not_reached
+./unit_test not_reached failed
 FAIL[not_reached] VERIFY_NOT_REACHED (main.c:3)
+FAIL[failed]: VERIFY 1 == 2 (main.c:8)
 Result: 0 Success, 1 Failed, 0 Skipped
 ```
 
