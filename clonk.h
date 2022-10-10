@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,21 +87,65 @@ void clonk_add_test(const char* name, TestCaseFunction func, ClonkTestType test_
     last_entry->next = calloc(1, sizeof(ClonkTestCaseEntry));
 }
 
-#define RUN_TESTS_MATCHING(CONDITION)                                 \
+#define FOR_EACH_MATCHING_TEST(CONDITION, BODY)                       \
     for (ClonkTestCaseEntry* test_case = s_test_suite.test_cases;     \
          test_case && test_case->next; test_case = test_case->next) { \
         if (CONDITION) {                                              \
-            test_case->test_func(test_case->test_name);               \
+            BODY;                                                     \
         }                                                             \
     }
 
+#define RUN_MATCHING_TESTS(CONDITION) \
+    FOR_EACH_MATCHING_TEST(CONDITION, test_case->test_func(test_case->test_name))
+
+void clonk_show_usage(char** argv)
+{
+    fprintf(stderr, "Usage: %s [-tblh] [TEST_NAME]...\n", argv[0]);
+    fprintf(stderr, "clonk based test/benchmark executable.\n");
+    fprintf(stderr, "Options: \n");
+    fprintf(stderr, "  -b    Run benchmarks\n");
+    fprintf(stderr, "  -t    Run tests\n");
+    fprintf(stderr, "  -l    List available tests\n");
+    fprintf(stderr, "  -h    Show this help message\n");
+}
+
 int clonk_run_test_suite(int argc, char** argv)
 {
-    if (argc == 2) {
-        RUN_TESTS_MATCHING(strcmp(test_case->test_name, argv[1]) == 0);
-    } else {
-        RUN_TESTS_MATCHING(1);
+    int opt;
+    int run_all_tests = 1;
+    while ((opt = getopt(argc, argv, "tblh")) != -1) {
+        run_all_tests = 0;
+        switch (opt) {
+        case 't':
+            RUN_MATCHING_TESTS(test_case->type == TYPE_TEST);
+            break;
+        case 'b':
+            RUN_MATCHING_TESTS(test_case->type == TYPE_BENCHMARK);
+            break;
+        case 'l':
+            fprintf(stderr, "Tests: \n");
+            FOR_EACH_MATCHING_TEST(test_case->type == TYPE_TEST, fprintf(stderr, "  %s\n", test_case->test_name));
+            fprintf(stderr, "Benchmarks: \n");
+            FOR_EACH_MATCHING_TEST(test_case->type == TYPE_BENCHMARK, fprintf(stderr, "  %s\n", test_case->test_name));
+            return 0;
+        case 'h':
+            clonk_show_usage(argv);
+            return 0;
+        default:
+            clonk_show_usage(argv);
+            return 1;
+        }
     }
+
+    char** positionals = &argv[optind];
+    if (run_all_tests && !*positionals) {
+        RUN_MATCHING_TESTS(1);
+    } else {
+        for (; *positionals; positionals++) {
+            RUN_MATCHING_TESTS(strcmp(test_case->test_name, *positionals) == 0);
+        }
+    }
+
     printf("Result: " ESCP_SUCCESS "%d Success" ESCP_EXIT ", " ESCP_FAILED
            "%d Failed" ESCP_EXIT ", " ESCP_SKIPPED "%d Skipped" ESCP_EXIT "\n",
         s_test_suite.success_count, s_test_suite.fail_count,
@@ -118,20 +163,20 @@ int clonk_run_test_suite(int argc, char** argv)
         return RESULT_SUCCESS;                                   \
     }
 
-#define BENCHMARK(BASE_NAME, BODY)                                                                  \
-    ClonkTestCaseResult BENCHMARK_NAME(BASE_NAME)(                                                  \
-        const char* clonk_test_case_base_name)                                                      \
-    {                                                                                               \
-        struct timeval tval_before, tval_after, tval_result;                                        \
-        gettimeofday(&tval_before, NULL);                                                           \
-        for (volatile int cbi = 0; cbi < CLONK_BENCHMARK_CYCLES; cbi++) {                           \
-            BODY                                                                                    \
-        }                                                                                           \
-        gettimeofday(&tval_after, NULL);                                                            \
-        timersub(&tval_after, &tval_before, &tval_result);                                          \
-        uint64_t elapsed_ms = (tval_result.tv_sec * (uint64_t)1000) + (tval_result.tv_usec / 1000); \
-        PRINT_TEST_RESULT(ESCP_INFO "BENCHMARK" ESCP_EXIT, ": took %lu ms ", elapsed_ms);           \
-        return RESULT_SUCCESS;                                                                      \
+#define BENCHMARK(BASE_NAME, BODY)                                                                                               \
+    ClonkTestCaseResult BENCHMARK_NAME(BASE_NAME)(                                                                               \
+        const char* clonk_test_case_base_name)                                                                                   \
+    {                                                                                                                            \
+        struct timeval tval_before, tval_after, tval_result;                                                                     \
+        gettimeofday(&tval_before, NULL);                                                                                        \
+        for (volatile int cbi = 0; cbi < CLONK_BENCHMARK_CYCLES; cbi++) {                                                        \
+            BODY                                                                                                                 \
+        }                                                                                                                        \
+        gettimeofday(&tval_after, NULL);                                                                                         \
+        timersub(&tval_after, &tval_before, &tval_result);                                                                       \
+        uint64_t elapsed_ms = (tval_result.tv_sec * (uint64_t)1000) + (tval_result.tv_usec / 1000);                              \
+        PRINT_TEST_RESULT(ESCP_INFO "BENCHMARK" ESCP_EXIT, ": took %lu ms (%d iterations)", elapsed_ms, CLONK_BENCHMARK_CYCLES); \
+        return RESULT_SUCCESS;                                                                                                   \
     }
 
 #define VERIFY(EXPRESSION)                                  \
