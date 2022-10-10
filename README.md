@@ -1,4 +1,5 @@
-# Clonk
+
+<h1><img src="./img/clonk.svg" height="48px"> Clonk</h1>
 
 Clonk is a small but capable single header unit testing framework.
 Aside from unit tests it also offers the possibility to write simple benchmarks.
