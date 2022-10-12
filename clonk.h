@@ -63,10 +63,8 @@ static TestSuite s_test_suite = { 0 };
 #endif
 
 /******** Internal Settings & Helpers ********/
-#define TEST_CASE_NAME_PREFIX test_
-#define BENCHMARK_NAME_PREFIX benchmark_
-#define TEST_CASE_NAME(BASE_NAME) TEST_CASE_NAME_PREFIX##BASE_NAME
-#define BENCHMARK_NAME(BASE_NAME) BENCHMARK_NAME_PREFIX##BASE_NAME
+#define TEST_CASE_NAME(BASE_NAME) test_##BASE_NAME
+#define BENCHMARK_NAME(BASE_NAME) benchmark_##BASE_NAME
 #define SOURCE_CODE_POSITON_FORMATTER "(%s:%d)\n"
 
 #define PRINT_TEST_RESULT(RESULT, MESSAGE, ...)                 \
