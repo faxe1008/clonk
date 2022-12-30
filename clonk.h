@@ -85,6 +85,16 @@ void clonk_add_test(const char* name, TestCaseFunction func, ClonkTestType test_
     last_entry->next = calloc(1, sizeof(ClonkTestCaseEntry));
 }
 
+void clonk_free_suite()
+{
+    ClonkTestCaseEntry* current = s_test_suite.test_cases;
+    while (current) {
+        ClonkTestCaseEntry* next = current->next;
+        free(current);
+        current = next;
+    }
+}
+
 #define FOR_EACH_MATCHING_TEST(CONDITION, BODY)                       \
     for (ClonkTestCaseEntry* test_case = s_test_suite.test_cases;     \
          test_case && test_case->next; test_case = test_case->next) { \
@@ -148,6 +158,7 @@ int clonk_run_test_suite(int argc, char** argv)
            "%d Failed" ESCP_EXIT ", " ESCP_SKIPPED "%d Skipped" ESCP_EXIT "\n",
         s_test_suite.success_count, s_test_suite.fail_count,
         s_test_suite.skip_count);
+    clonk_free_suite();
     return s_test_suite.fail_count;
 }
 
